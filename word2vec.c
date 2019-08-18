@@ -283,7 +283,7 @@ void LearnVocabFromTrainFile() {
     fclose(ftmp);
     strcpy(train_file, tmpfile);
   }
-  
+
   fin = fopen(train_file, "rb");
   
   if (fin == NULL) {
@@ -395,12 +395,12 @@ void *TrainModelThread(void *id) {
     if (word_count - last_word_count > 10000) {
       word_count_actual += word_count - last_word_count;
       last_word_count = word_count;
-      if ((debug_mode > 1)) {
+      if ((debug_mode > 1) || hive) {
         now=clock();
-        printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
+        fprintf(stderr, "%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
          word_count_actual / (real)(iter * train_words + 1) * 100,
          word_count_actual / ((real)(now - start + 1) / (real)CLOCKS_PER_SEC * 1000));
-        fflush(stdout);
+        fflush(stderr);
       }
       alpha = starting_alpha * (1 - word_count_actual / (real)(iter * train_words + 1));
       if (alpha < starting_alpha * 0.0001) alpha = starting_alpha * 0.0001;
