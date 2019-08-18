@@ -49,6 +49,7 @@ int hs = 0, negative = 5;
 const int table_size = 1e8;
 int *table;
 
+
 void InitUnigramTable() {
   int a, i;
   double train_words_pow = 0;
@@ -264,7 +265,27 @@ void LearnVocabFromTrainFile() {
   FILE *fin;
   long long a, i;
   for (a = 0; a < vocab_hash_size; a++) vocab_hash[a] = -1;
-  fin = fopen(train_file, "rb");
+  if(train_file[0] == 0){ // 从标准输入中读取数据
+    fin = stdin;
+    char * tmpfile = "data.dat";
+    FILE * ftmp = fopen(tmpfile, "wb");
+    if(ftmp == NULL) {
+      printf("ERROR: write tmp file failed!\n");
+      exit(1);
+    }
+    int buffsize = 102400;
+    char * buff=(char *) malloc(sizeof(char) * buffsize);
+    while(!feof(fin)){
+      fread(buff, sizeof(char), buffsize-1, fin);
+      fwrite(buff, sizeof(char), buffsize-1, ftmp);
+    }
+    free(buff);
+    fclose(ftmp);
+    strcpy(train_file, tmpfile);
+  }else{
+    fin = fopen(train_file, "rb");
+  }
+  
   if (fin == NULL) {
     printf("ERROR: training data file not found!\n");
     exit(1);
@@ -549,13 +570,18 @@ void TrainModel() {
   starting_alpha = alpha;
   if (read_vocab_file[0] != 0) ReadVocab(); else LearnVocabFromTrainFile();
   if (save_vocab_file[0] != 0) SaveVocab();
-  if (output_file[0] == 0) return;
+  
   InitNet();
   if (negative > 0) InitUnigramTable();
   start = clock();
   for (a = 0; a < num_threads; a++) pthread_create(&pt[a], NULL, TrainModelThread, (void *)a);
   for (a = 0; a < num_threads; a++) pthread_join(pt[a], NULL);
-  fo = fopen(output_file, "wb");
+  if (output_file[0] == 0){ // 没有指定输出文件，则输出到控制台，用在hive训练中
+    fo = stdout;
+  }else{
+    fo = fopen(output_file, "wb");
+  }
+  
   if (classes == 0) {
     // Save the word vectors
     fprintf(fo, "%lld %lld\n", vocab_size, layer1_size);
