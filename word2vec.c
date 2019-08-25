@@ -276,8 +276,8 @@ void LearnVocabFromTrainFile() {
     int buffsize = 102400;
     char * buff=(char *) malloc(sizeof(char) * buffsize);
     while(!feof(fin)){
-      fread(buff, sizeof(char), buffsize-1, fin);
-      fwrite(buff, sizeof(char), buffsize-1, ftmp);
+      size_t nsize = fread(buff, sizeof(char), buffsize-1, fin);
+      fwrite(buff, sizeof(char), nsize, ftmp);
     }
     free(buff);
     fclose(ftmp);
